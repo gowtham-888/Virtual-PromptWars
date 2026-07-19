@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Copa Copilot is a premium AI-driven stadium operations and fan experience prototype for FIFA World Cup 2026.">
+<meta name="theme-color" content="#0f3a2a">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; img-src 'self' https: data:; connect-src 'self' https:;">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
 <title>Copa Copilot — GenAI Stadium Command Platform | FIFA World Cup 2026</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -245,7 +249,7 @@ footer{margin-top:36px;text-align:center;font-size:11px;color:var(--ink-soft);le
 <a class="skip-link" href="#main-content">Skip to main content</a>
 <div id="toastContainer" role="status" aria-live="polite" aria-atomic="true"></div>
 
-<div class="wrap" id="main-content">
+<main class="wrap" id="main-content">
 
   <div class="topbar" style="position:relative;">
     <div class="brand">
@@ -331,7 +335,7 @@ footer{margin-top:36px;text-align:center;font-size:11px;color:var(--ink-soft);le
               </select>
             </div>
           </div>
-          <div class="chat" id="chatLog"></div>
+          <div class="chat" id="chatLog" aria-live="polite" aria-label="Fan assistant conversation"></div>
           <div class="chips">
             <div class="chip" data-q="Navigate me to my seat, Section 118">🧭 Navigate to seat</div>
             <div class="chip" data-q="Where is the nearest accessible restroom?">🚻 Nearest restroom</div>
@@ -401,7 +405,7 @@ footer{margin-top:36px;text-align:center;font-size:11px;color:var(--ink-soft);le
         <div class="glass panel">
           <h4 style="margin-bottom:12px;">AI Recommendation Feed</h4>
           <button class="gen-btn" id="genRecBtn" style="margin-bottom:14px;">✨ Generate AI Recommendation</button>
-          <div id="recFeed"></div>
+          <div id="recFeed" aria-live="polite" aria-label="AI recommendation feed"></div>
         </div>
 
         <div class="glass panel">

@@ -1,0 +1,8 @@
+{
+  "name": "copa-copilot-site",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node tests/accessibility.test.js"
+  }
+}

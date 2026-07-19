@@ -3,10 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Copa Copilot is a premium AI-driven stadium operations and fan experience prototype for FIFA World Cup 2026.">
 <title>Copa Copilot — GenAI Stadium Command Platform | FIFA World Cup 2026</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
+.skip-link{position:absolute;left:-9999px;top:auto;}
+.skip-link:focus{left:16px;top:16px;z-index:9999;background:#fff;color:#04120d;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:700;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--turf-300);outline-offset:2px;}
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500&display=swap');
 
 :root{
@@ -237,9 +242,10 @@ footer{margin-top:36px;text-align:center;font-size:11px;color:var(--ink-soft);le
 </style>
 </head>
 <body>
-<div id="toastContainer"></div>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+<div id="toastContainer" role="status" aria-live="polite" aria-atomic="true"></div>
 
-<div class="wrap">
+<div class="wrap" id="main-content">
 
   <div class="topbar" style="position:relative;">
     <div class="brand">
@@ -250,28 +256,28 @@ footer{margin-top:36px;text-align:center;font-size:11px;color:var(--ink-soft);le
       </div>
     </div>
     <div class="header-controls">
-      <button class="demo-toggle" id="demoToggle"><span class="led"></span> Demo Mode</button>
-      <button class="icon-btn" id="themeToggle" title="Toggle dark mode">🌙</button>
-      <button class="icon-btn" id="settingsToggle" title="AI engine settings">⚙️</button>
+      <button class="demo-toggle" id="demoToggle" aria-pressed="false"><span class="led" aria-hidden="true"></span> Demo Mode</button>
+      <button class="icon-btn" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
+      <button class="icon-btn" id="settingsToggle" title="AI engine settings" aria-label="Open AI engine settings">⚙️</button>
     </div>
 
-    <div class="glass settings-panel" id="settingsPanel">
+    <div class="glass settings-panel" id="settingsPanel" role="dialog" aria-label="AI engine settings">
       <strong style="font-size:13px;">AI Engine</strong>
-      <label>Provider</label>
-      <select id="engineSelect">
+      <label for="engineSelect">Provider</label>
+      <select id="engineSelect" aria-label="Choose AI provider">
         <option value="claude">Claude (built-in, no key needed)</option>
         <option value="gemini">Google Gemini (bring your own key)</option>
       </select>
-      <label>Gemini API Key</label>
-      <input type="password" id="geminiKeyInput" placeholder="Paste key to enable Gemini">
+      <label for="geminiKeyInput">Gemini API Key</label>
+      <input type="password" id="geminiKeyInput" placeholder="Paste key to enable Gemini" autocomplete="off" aria-label="Gemini API key">
       <div class="hint">Claude runs automatically inside this artifact — no setup needed for the demo. Switch to Gemini any time by pasting a key; it's kept in memory only and never saved.</div>
     </div>
 
-    <div class="tabs glass" style="width:100%;">
-      <button class="tab active" data-view="fan">Fan Companion</button>
-      <button class="tab" data-view="ops">Command Center</button>
-      <button class="tab" data-view="vol">Volunteer AI</button>
-      <button class="tab" data-view="tools">AI Tools</button>
+    <div class="tabs glass" style="width:100%;" role="tablist" aria-label="App sections">
+      <button class="tab active" data-view="fan" aria-controls="fan" aria-selected="true" role="tab">Fan Companion</button>
+      <button class="tab" data-view="ops" aria-controls="ops" aria-selected="false" role="tab">Command Center</button>
+      <button class="tab" data-view="vol" aria-controls="vol" aria-selected="false" role="tab">Volunteer AI</button>
+      <button class="tab" data-view="tools" aria-controls="tools" aria-selected="false" role="tab">AI Tools</button>
     </div>
   </div>
 
@@ -334,9 +340,10 @@ footer{margin-top:36px;text-align:center;font-size:11px;color:var(--ink-soft);le
             <div class="chip" data-q="Where is the nearest recycling point?">♻️ Recycling point</div>
           </div>
           <div class="input-row">
-            <input type="text" id="fanInput" placeholder="Ask in any language…" />
-            <button class="mic-btn" id="fanMic" title="Voice input">🎤</button>
-            <button class="send" id="fanSend">➤</button>
+            <label class="sr-only" for="fanInput">Message the fan assistant</label>
+            <input type="text" id="fanInput" placeholder="Ask in any language…" autocomplete="off" aria-label="Ask the fan assistant" />
+            <button class="mic-btn" id="fanMic" title="Voice input" aria-label="Start voice input">🎤</button>
+            <button class="send" id="fanSend" aria-label="Send message">➤</button>
           </div>
         </div>
       </div>
@@ -419,8 +426,9 @@ footer{margin-top:36px;text-align:center;font-size:11px;color:var(--ink-soft);le
       <p class="sub">Grounded in venue SOPs (embedded as context). Real AI classifies each query and escalates safety-critical ones automatically.</p>
       <div class="vol-log" id="volLog"></div>
       <div class="vol-input">
-        <input type="text" id="volInput" placeholder="Type a volunteer question, e.g. 'A fan lost their child near Gate 3'">
-        <button id="volSend">Ask AI</button>
+        <label class="sr-only" for="volInput">Volunteer assistant question</label>
+        <input type="text" id="volInput" placeholder="Type a volunteer question, e.g. 'A fan lost their child near Gate 3'" aria-label="Volunteer assistant question">
+        <button id="volSend" aria-label="Send volunteer question">Ask AI</button>
       </div>
     </div>
   </div>
@@ -431,19 +439,19 @@ footer{margin-top:36px;text-align:center;font-size:11px;color:var(--ink-soft);le
 
       <!-- Announcement Generator -->
       <div class="glass tool-card">
-        <h4>📢 AI Announcement Generator</h4>
+        <h4 id="announcement-heading">📢 AI Announcement Generator</h4>
         <p class="sub">Generates a stadium PA announcement, ready to read aloud.</p>
-        <div class="field"><label>Type</label>
-          <select id="annType"><option>Kickoff Reminder</option><option>Weather Alert</option><option>Delay Notice</option><option>Lost Child Alert</option><option>General Information</option></select>
+        <div class="field"><label for="annType">Type</label>
+          <select id="annType" aria-labelledby="announcement-heading"><option>Kickoff Reminder</option><option>Weather Alert</option><option>Delay Notice</option><option>Lost Child Alert</option><option>General Information</option></select>
         </div>
-        <div class="field"><label>Tone</label>
-          <select id="annTone"><option>Formal</option><option>Friendly</option><option>Urgent</option></select>
+        <div class="field"><label for="annTone">Tone</label>
+          <select id="annTone" aria-labelledby="announcement-heading"><option>Formal</option><option>Friendly</option><option>Urgent</option></select>
         </div>
-        <div class="field"><label>Language</label>
-          <select id="annLang"><option>English</option><option>Español</option><option>Français</option><option>Português</option></select>
+        <div class="field"><label for="annLang">Language</label>
+          <select id="annLang" aria-labelledby="announcement-heading"><option>English</option><option>Español</option><option>Français</option><option>Português</option></select>
         </div>
-        <div class="field"><label>Details</label><textarea id="annDetails" placeholder="e.g. Gates open 90 minutes before kickoff, please have tickets ready"></textarea></div>
-        <button class="gen-btn" data-tool="announcement">✨ Generate Announcement</button>
+        <div class="field"><label for="annDetails">Details</label><textarea id="annDetails" placeholder="e.g. Gates open 90 minutes before kickoff, please have tickets ready" aria-label="Announcement details"></textarea></div>
+        <button class="gen-btn" data-tool="announcement" aria-label="Generate announcement">✨ Generate Announcement</button>
         <div class="tool-output" id="out-announcement"></div>
       </div>
 
@@ -451,12 +459,12 @@ footer{margin-top:36px;text-align:center;font-size:11px;color:var(--ink-soft);le
       <div class="glass tool-card">
         <h4>🚌 AI Transportation Assistant</h4>
         <p class="sub">Live transit-aware trip planning.</p>
-        <div class="field"><label>From</label>
+        <div class="field"><label for="transFrom">From</label>
           <select id="transFrom"><option>Downtown Mexico City</option><option>Airport Hotel Zone</option><option>Polanco</option><option>Coyoacán</option></select>
         </div>
-        <div class="field"><label>To</label><select id="transTo"><option>Estadio Azteca</option></select></div>
-        <div class="field"><label>Departure time</label><input type="time" id="transTime" value="17:30"></div>
-        <button class="gen-btn" data-tool="transport">✨ Plan My Trip</button>
+        <div class="field"><label for="transTo">To</label><select id="transTo"><option>Estadio Azteca</option></select></div>
+        <div class="field"><label for="transTime">Departure time</label><input type="time" id="transTime" value="17:30"></div>
+        <button class="gen-btn" data-tool="transport" aria-label="Plan trip">✨ Plan My Trip</button>
         <div class="tool-output" id="out-transport"></div>
       </div>
 
@@ -464,10 +472,10 @@ footer{margin-top:36px;text-align:center;font-size:11px;color:var(--ink-soft);le
       <div class="glass tool-card">
         <h4>♿ Accessibility Route Planner</h4>
         <p class="sub">Generates a full accessible itinerary, drawn live on the map.</p>
-        <div class="field"><label>Entry gate</label>
+        <div class="field"><label for="accGate">Entry gate</label>
           <select id="accGate"><option>Gate 1</option><option>Gate 2</option><option>Gate 3</option><option>Gate 4</option><option>Gate 5</option><option>Gate 6</option></select>
         </div>
-        <div class="field"><label>Seat section</label><input type="text" id="accSection" placeholder="e.g. Section 214, Row H" value="Section 214, Row H"></div>
+        <div class="field"><label for="accSection">Seat section</label><input type="text" id="accSection" placeholder="e.g. Section 214, Row H" value="Section 214, Row H"></div>
         <div class="field"><label>Needs</label>
           <div class="check-row">
             <label><input type="checkbox" checked value="Wheelchair access"> Wheelchair</label>
@@ -476,7 +484,7 @@ footer{margin-top:36px;text-align:center;font-size:11px;color:var(--ink-soft);le
             <label><input type="checkbox" value="Visual assistance"> Visual assistance</label>
           </div>
         </div>
-        <button class="gen-btn" data-tool="accessibility">✨ Generate Route</button>
+        <button class="gen-btn" data-tool="accessibility" aria-label="Generate accessibility route">✨ Generate Route</button>
         <div class="tool-output" id="out-accessibility"></div>
       </div>
 
@@ -492,7 +500,7 @@ footer{margin-top:36px;text-align:center;font-size:11px;color:var(--ink-soft);le
           <div class="widget"><div class="wt">Energy use</div><div class="wv" id="susEnergy">—</div></div>
           <div class="widget"><div class="wt">CO₂ offset</div><div class="wv" id="susCo2">—</div></div>
         </div>
-        <button class="gen-btn" data-tool="sustainability" style="margin-top:12px;">✨ Generate Today's Report</button>
+        <button class="gen-btn" data-tool="sustainability" style="margin-top:12px;" aria-label="Generate sustainability report">✨ Generate Today's Report</button>
         <div class="tool-output" id="out-sustainability"></div>
       </div>
 
@@ -500,8 +508,8 @@ footer{margin-top:36px;text-align:center;font-size:11px;color:var(--ink-soft);le
       <div class="glass tool-card">
         <h4>🔍 Lost &amp; Found AI Assistant</h4>
         <p class="sub">Matches your description against items logged at venue desks today.</p>
-        <div class="field"><label>Describe what you lost</label><textarea id="lfDesc" placeholder="e.g. Navy blue backpack with a Brazil flag pin, lost near Gate 2 around 6pm"></textarea></div>
-        <button class="gen-btn" data-tool="lostfound">✨ Search Matches</button>
+        <div class="field"><label for="lfDesc">Describe what you lost</label><textarea id="lfDesc" placeholder="e.g. Navy blue backpack with a Brazil flag pin, lost near Gate 2 around 6pm"></textarea></div>
+        <button class="gen-btn" data-tool="lostfound" aria-label="Search lost and found matches">✨ Search Matches</button>
         <div class="tool-output" id="out-lostfound"></div>
       </div>
 
@@ -515,7 +523,7 @@ footer{margin-top:36px;text-align:center;font-size:11px;color:var(--ink-soft);le
         <div class="field"><label>Affected zone</label>
           <select id="evZone"><option>Gate 1</option><option>Gate 2</option><option>Gate 3</option><option>Gate 4</option><option>Gate 5</option><option>Gate 6</option></select>
         </div>
-        <button class="gen-btn" data-tool="evacuation">✨ Generate Evacuation Plan</button>
+        <button class="gen-btn" data-tool="evacuation" aria-label="Generate evacuation plan">✨ Generate Evacuation Plan</button>
         <div class="tool-output" id="out-evacuation"></div>
       </div>
 
@@ -705,9 +713,13 @@ function toast(msg, type='info'){
 ========================================================================= */
 document.querySelectorAll('.tab').forEach(tab=>{
   tab.addEventListener('click', ()=>{
-    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t=>{
+      t.classList.remove('active');
+      t.setAttribute('aria-selected', 'false');
+    });
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     tab.classList.add('active');
+    tab.setAttribute('aria-selected', 'true');
     document.getElementById(tab.dataset.view).classList.add('active');
     if(tab.dataset.view === 'fan' && map) setTimeout(()=>map.invalidateSize(), 80);
   });
@@ -724,7 +736,9 @@ document.getElementById('themeToggle').addEventListener('click', ()=>{
   toast(next === 'dark' ? 'Dark mode on' : 'Light mode on', 'info');
 });
 document.getElementById('settingsToggle').addEventListener('click', ()=>{
-  document.getElementById('settingsPanel').classList.toggle('open');
+  const panel = document.getElementById('settingsPanel');
+  panel.classList.toggle('open');
+  panel.setAttribute('aria-hidden', String(!panel.classList.contains('open')));
 });
 const engineSelect = document.getElementById('engineSelect');
 const geminiKeyInput = document.getElementById('geminiKeyInput');
@@ -755,6 +769,7 @@ document.getElementById('demoToggle').addEventListener('click', ()=>{
   demoMode = !demoMode;
   const btn = document.getElementById('demoToggle');
   btn.classList.toggle('on', demoMode);
+  btn.setAttribute('aria-pressed', String(demoMode));
   if(demoMode){
     toast('Demo Mode activated — simulating live stadium activity', 'success');
     demoIntervalFan = setInterval(()=>{
@@ -788,8 +803,14 @@ function initMap(){
       radius:11, color:'#fff', weight:2, fillColor:statusColor(g.pct), fillOpacity:0.9
     }).addTo(map);
     marker.bindPopup(popupHTML(g));
-    marker.on('click', ()=>{ marker.setPopupContent(popupHTML(g)); });
+    marker.on('click', ()=>{ marker.setPopupContent(popupHTML(g)); setTimeout(()=>attachRouteButtons(), 0); });
     gateMarkers[g.id] = marker;
+  });
+}
+
+function attachRouteButtons(){
+  document.querySelectorAll('.route-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> drawRouteTo(btn.dataset.gateId), { once: true });
   });
 }
 
@@ -797,7 +818,7 @@ function popupHTML(g){
   return `<div style="font-family:Inter,sans-serif;min-width:150px;">
     <b>${g.name}</b><br>
     <span style="color:${statusColor(g.pct)};font-weight:700;">${g.pct}% · ${statusLabel(g.pct)}</span>
-    <div style="margin-top:6px;"><button onclick="drawRouteTo('${g.id}')" style="background:#0B3D2E;color:#fff;border:none;padding:5px 9px;border-radius:6px;font-size:11px;cursor:pointer;">🧭 Route here</button></div>
+    <div style="margin-top:6px;"><button class="route-btn" data-gate-id="${g.id}" style="background:#0B3D2E;color:#fff;border:none;padding:5px 9px;border-radius:6px;font-size:11px;cursor:pointer;">🧭 Route here</button></div>
   </div>`;
 }
 
@@ -1052,11 +1073,17 @@ function renderRecFeed(){
       <p>${escapeHTML(r.message)}</p>
       ${r.status === 'pending' ? `
         <div class="rec-actions">
-          <button class="btn-approve" onclick="resolveRec(${r.id},'approved')">✓ Approve &amp; push</button>
-          <button class="btn-dismiss" onclick="resolveRec(${r.id},'dismissed')">Dismiss</button>
+          <button class="btn-approve" data-action="approve" data-id="${r.id}">✓ Approve &amp; push</button>
+          <button class="btn-dismiss" data-action="dismiss" data-id="${r.id}">Dismiss</button>
         </div>` : `<span class="rec-status ${r.status}">${r.status === 'approved' ? '✓ Approved & pushed to fans' : 'Dismissed'}</span>`
       }
     </div>`).join('');
+  el.querySelectorAll('button[data-action]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const status = btn.dataset.action === 'approve' ? 'approved' : 'dismissed';
+      resolveRec(Number(btn.dataset.id), status);
+    });
+  });
 }
 
 window.resolveRec = function(id, status){

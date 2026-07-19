@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copa Copilot — GenAI Stadium Command Platform | FIFA World Cup 2026</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500&display=swap');
+
+:root{
+  --pitch-900:#04120d;
+  --pitch-700:#0f3b2b;
+  --turf-500:#2dcf78;
+  --turf-300:#7ee2ad;
+  --amber:#f0bc53;
+  --coral:#ff6d5f;
+  --ink:#eaf7f0;
+  --ink-soft:#9eb7a9;
+  --line:rgba(255,255,255,0.12);
+  --glass-bg:rgba(9,22,18,0.72);
+  --glass-border:rgba(255,255,255,0.16);
+  --paper:#0b1612;
+  --floodlight:#0e1d17;
+  --bg-grad-1:#030806;
+  --bg-grad-2:#0f2b20;
+  --shadow:0 24px 70px rgba(0,0,0,0.4);
+}
+:root:not([data-theme="dark"]){
+  --pitch-900:#0f3a2a;
+  --pitch-700:#1b5b3d;
+  --turf-500:#2fbf72;
+  --turf-300:#7fdfa8;
+  --amber:#f4c75a;
+  --coral:#ff7b69;
+  --ink:#142319;
+  --ink-soft:#5f7368;
+  --line:rgba(7,26,17,0.11);
+  --glass-bg:rgba(255,255,255,0.78);
+  --glass-border:rgba(255,255,255,0.62);
+  --paper:#fbfefc;
+  --floodlight:#f3fbf6;
+  --bg-grad-1:#f2f8f3;
+  --bg-grad-2:#ddefe1;
+  --shadow:0 24px 70px rgba(8,42,28,0.12);
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  font-family:'Inter',sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(circle at 10% 8%, rgba(45,207,120,0.18), transparent 36%),
+    radial-gradient(circle at 92% 18%, rgba(240,188,83,0.14), transparent 28%),
+    linear-gradient(140deg, var(--bg-grad-1), var(--bg-grad-2));
+  min-height:100vh;
+  transition:background .25s ease, color .25s ease;
+  overflow-x:hidden;
+}
+body::before, body::after{content:"";position:fixed;width:340px;height:340px;border-radius:50%;filter:blur(70px);opacity:.22;pointer-events:none;z-index:0;}
+body::before{top:-90px;left:-80px;background:var(--turf-500);animation:drift 16s ease-in-out infinite alternate;}
+body::after{bottom:-120px;right:-60px;background:var(--amber);animation:drift 18s ease-in-out infinite alternate-reverse;}
+@keyframes drift{from{transform:translate3d(0,0,0) scale(1);}to{transform:translate3d(30px,-20px,0) scale(1.08);}}
+.wrap{max-width:1280px;margin:0 auto;padding:24px 20px 88px;position:relative;z-index:1;}
+.glass{background:var(--glass-bg);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1px solid var(--glass-border);border-radius:24px;box-shadow:var(--shadow);}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px;position:relative;}
+.brand{display:flex;align-items:center;gap:12px;}
+.crest{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg, var(--pitch-700), var(--turf-500), var(--amber));display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Space Grotesk';font-weight:700;font-size:18px;box-shadow:0 12px 30px rgba(0,0,0,0.22);}
+.brand h1{font-family:'Space Grotesk';font-weight:700;font-size:22px;letter-spacing:.08em;margin:0;color:var(--ink);text-transform:uppercase;}
+.brand p{margin:3px 0 0;font-size:11px;color:var(--ink-soft);letter-spacing:.04em;text-transform:uppercase;}
+.header-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.icon-btn,.demo-toggle{background:rgba(255,255,255,0.08);border:1px solid var(--line);color:var(--ink);cursor:pointer;backdrop-filter:blur(10px);}
+.icon-btn{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.demo-toggle{display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:999px;font-size:12px;font-weight:700;}
+.demo-toggle .led{width:8px;height:8px;border-radius:50%;background:var(--ink-soft);transition:all .3s ease;}
+.demo-toggle.on{color:var(--turf-300);border-color:rgba(45,207,120,0.3);}
+.demo-toggle.on .led{background:var(--turf-500);box-shadow:0 0 0 6px rgba(45,207,120,0.18);animation:pulse 1.3s infinite;}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(45,207,120,0.25);}50%{opacity:.7;box-shadow:0 0 0 8px rgba(45,207,120,0);} }
+.settings-panel{position:absolute;right:0;top:68px;width:290px;z-index:50;padding:16px;display:none;border-radius:18px;}
+.settings-panel.open{display:block;animation:fade .2s ease;}
+.settings-panel label{font-size:11.5px;font-weight:700;color:var(--ink-soft);display:block;margin:10px 0 5px;letter-spacing:.04em;text-transform:uppercase;}
+.settings-panel select,.settings-panel input{width:100%;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,0.05);color:var(--ink);font-size:12.5px;}
+.settings-panel .hint{font-size:10.8px;color:var(--ink-soft);margin-top:8px;line-height:1.5;}
+.tabs{display:flex;gap:8px;padding:7px;border-radius:999px;overflow-x:auto;backdrop-filter:blur(16px);}
+.tab{border:none;background:transparent;padding:10px 15px;border-radius:999px;white-space:nowrap;font-family:'Space Grotesk';font-size:12px;letter-spacing:.08em;font-weight:700;color:var(--ink-soft);cursor:pointer;transition:all .2s ease;text-transform:uppercase;}
+.tab.active{background:linear-gradient(135deg, var(--pitch-700), var(--pitch-900));color:#fff;box-shadow:0 10px 28px rgba(4,18,13,0.24);}
+.view{display:none;}.view.active{display:block;animation:fade .35s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);} }
+.hero-shell{padding:26px;position:relative;overflow:hidden;margin-bottom:24px;}
+.hero-shell::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg, rgba(45,207,120,0.15), transparent 37%, rgba(240,188,83,0.12) 100%);pointer-events:none;}
+.hero-grid{display:grid;grid-template-columns:1.12fr .88fr;gap:24px;position:relative;z-index:1;align-items:center;}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,0.08);border:1px solid var(--line);font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:14px;}
+.hero-tag .dot{width:8px;height:8px;border-radius:50%;background:var(--turf-500);box-shadow:0 0 0 6px rgba(45,207,120,0.18);animation:pulse 1.4s infinite;}
+.hero-copy h2{font-family:'Space Grotesk';font-size:clamp(32px,4vw,56px);line-height:1.02;margin:0 0 14px;color:var(--ink);}
+.hero-copy p{max-width:620px;font-size:15px;line-height:1.7;color:var(--ink-soft);margin:0 0 18px;}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;}
+.btn-primary,.btn-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:999px;font-weight:700;font-size:13px;text-decoration:none;transition:transform .2s ease, box-shadow .2s ease;}
+.btn-primary{background:linear-gradient(135deg, var(--turf-500), var(--pitch-700));color:#fff;box-shadow:0 16px 34px rgba(45,207,120,0.22);} 
+.btn-secondary{background:rgba(255,255,255,0.08);border:1px solid var(--line);color:var(--ink);} 
+.btn-primary:hover,.btn-secondary:hover{transform:translateY(-1px);} 
+.hero-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+.hero-badges span{padding:8px 10px;border-radius:999px;background:rgba(255,255,255,0.08);border:1px solid var(--line);font-size:11px;color:var(--ink-soft);font-weight:600;}
+.hero-card{padding:18px;border-radius:24px;background:linear-gradient(160deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));border:1px solid var(--line);position:relative;overflow:hidden;min-height:240px;}
+.hero-card::before{content:"";position:absolute;inset:-40% 40% auto auto;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle, rgba(45,207,120,0.45), transparent 70%);filter:blur(18px);pointer-events:none;}
+.hero-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px;}
+.hero-kpi{padding:13px;border-radius:16px;background:rgba(255,255,255,0.06);border:1px solid var(--line);}
+.hero-kpi .label{font-size:10px;text-transform:uppercase;letter-spacing:.16em;color:var(--ink-soft);margin-bottom:5px;font-weight:700;}
+.hero-kpi .value{font-family:'Space Grotesk';font-size:18px;color:var(--ink);}
+.hero-card .status-row{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:12px;color:var(--ink-soft);}
+.hero-card .pill{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:rgba(45,207,120,0.14);color:var(--turf-300);font-weight:700;}
+.fan-grid{display:grid;grid-template-columns:360px 1fr;gap:22px;}
+@media(max-width:920px){.fan-grid{grid-template-columns:1fr;}}
+.phone{background:linear-gradient(160deg, var(--pitch-900), var(--pitch-700));border-radius:30px;padding:12px;box-shadow:0 26px 70px rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.16);} 
+.screen{background:linear-gradient(180deg, var(--floodlight), rgba(255,255,255,0.045));border-radius:22px;overflow:hidden;display:flex;flex-direction:column;height:620px;border:1px solid rgba(255,255,255,0.1);} 
+.screen-head{background:linear-gradient(135deg, rgba(6,24,17,0.95), rgba(12,52,33,0.85));color:#fff;padding:15px 15px 12px;position:relative;}
+.screen-head::after{content:"";position:absolute;inset:auto 14px 0 14px;height:1px;background:linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);}
+.screen-head .loc{font-size:10.5px;opacity:.75;letter-spacing:.22em;text-transform:uppercase;}
+.screen-head h3{margin:5px 0 8px;font-family:'Space Grotesk';font-size:18px;font-weight:700;}
+.head-row{display:flex;gap:8px;align-items:center;justify-content:space-between;}
+.lang-select{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:11px;padding:6px 8px;border-radius:999px;font-family:inherit;}
+.lang-select option{color:#000;}
+.dot-live{width:7px;height:7px;border-radius:50%;background:var(--turf-300);display:inline-block;margin-right:6px;animation:pulse 1.6s infinite;}
+.chat{flex:1;padding:12px 12px 0;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
+.msg{max-width:86%;padding:11px 13px;border-radius:18px;font-size:12.8px;line-height:1.5;box-shadow:0 10px 26px rgba(0,0,0,0.08);}
+.msg.bot{background:rgba(255,255,255,0.94);align-self:flex-start;border-bottom-left-radius:6px;color:var(--pitch-900);}
+.msg.user{background:linear-gradient(135deg, var(--pitch-700), var(--pitch-900));color:#fff;align-self:flex-end;border-bottom-right-radius:6px;}
+.msg .meta{display:block;font-size:9.5px;color:var(--turf-500);margin-top:5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;}
+.msg.user .meta{color:var(--turf-300);} 
+.msg.loading{display:flex;gap:4px;align-self:flex-start;background:rgba(255,255,255,0.94);padding:12px 15px;border-radius:14px;}
+.msg.loading span{width:6px;height:6px;border-radius:50%;background:var(--ink-soft);animation:bounce 1s infinite;}
+.msg.loading span:nth-child(2){animation-delay:.15s;} .msg.loading span:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.45;}40%{transform:translateY(-4px);opacity:1;}}
+.chips{display:flex;gap:7px;flex-wrap:wrap;padding:0 12px 10px;}
+.chip{background:rgba(255,255,255,0.8);border:1px solid var(--line);border-radius:999px;padding:7px 11px;font-size:11px;font-weight:700;color:var(--pitch-700);cursor:pointer;transition:all .2s ease;}
+.chip:hover{background:var(--turf-300);color:var(--pitch-900);transform:translateY(-1px);} 
+.input-row{display:flex;gap:8px;padding:11px 12px 12px;border-top:1px solid rgba(0,0,0,0.06);background:rgba(255,255,255,0.94);}
+.input-row input{flex:1;border:1px solid rgba(0,0,0,0.06);border-radius:999px;padding:10px 14px;font-size:12.5px;font-family:inherit;background:rgba(255,255,255,0.95);color:var(--pitch-900);} 
+.mic-btn,.send{border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:15px;cursor:pointer;flex-shrink:0;transition:transform .2s ease;}
+.send{background:linear-gradient(135deg, var(--turf-500), var(--pitch-700));}
+.mic-btn{background:var(--pitch-700);} 
+.mic-btn.listening{background:var(--coral);animation:pulse 1s infinite;}
+.panel{padding:22px;margin-bottom:18px;position:relative;overflow:hidden;}
+.panel::before{content:"";position:absolute;inset:0 auto auto 0;width:160px;height:160px;background:radial-gradient(circle, rgba(45,207,120,0.12), transparent 70%);pointer-events:none;}
+.panel h4{font-family:'Space Grotesk';margin:0 0 6px;font-size:16px;color:var(--ink);}
+.panel .sub{font-size:12.5px;color:var(--ink-soft);margin:0 0 14px;line-height:1.6;}
+#leafletMap{height:300px;border-radius:16px;overflow:hidden;border:1px solid var(--line);}
+.map-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--ink-soft);} 
+.map-legend .row{display:flex;align-items:center;gap:6px;}
+.sw{width:10px;height:10px;border-radius:4px;}
+.feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.feature{border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(255,255,255,0.06);}
+.feature h5{margin:8px 0 4px;font-family:'Space Grotesk';font-size:12.8px;color:var(--ink);}
+.feature p{margin:0;font-size:11.5px;color:var(--ink-soft);line-height:1.5;}
+.ops-grid{display:grid;grid-template-columns:1.12fr .88fr;gap:20px;}
+@media(max-width:920px){.ops-grid{grid-template-columns:1fr;}}
+.command-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--line);} 
+.command-head .eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);} 
+.command-head .status-pill{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border-radius:999px;background:rgba(45,207,120,0.14);color:var(--turf-300);font-weight:700;}
+.gate-list{display:flex;flex-direction:column;gap:10px;}
+.gate{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;transition:background .25s ease, transform .25s ease;}
+.gate:hover{transform:translateY(-1px);background:rgba(255,255,255,0.05);} 
+.gate .name{font-family:'JetBrains Mono';font-size:11.5px;font-weight:600;width:62px;color:var(--ink);} 
+.bar-track{flex:1;height:9px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:999px;transition:width 1s ease, background .5s;}
+.pct{font-size:11.5px;font-weight:700;width:38px;text-align:right;font-family:'JetBrains Mono';color:var(--ink);} 
+.heatgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:12px;}
+.heatcell{aspect-ratio:1;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;color:#fff;transition:background .8s ease, box-shadow .8s;box-shadow:inset 0 1px 0 rgba(255,255,255,0.14);} 
+.mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px;}
+.stat{border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center;background:rgba(255,255,255,0.06);} 
+.stat .num{font-family:'Space Grotesk';font-size:20px;color:var(--ink);font-weight:700;}
+.stat .lbl{font-size:10px;color:var(--ink-soft);margin-top:2px;letter-spacing:.08em;text-transform:uppercase;}
+.chart-wrap{margin-top:10px;padding:8px 0 0;}
+.rec-card{background:linear-gradient(135deg, var(--pitch-700), var(--pitch-900));color:#fff;border-radius:18px;padding:18px;margin-bottom:12px;border:1px solid rgba(255,255,255,0.12);box-shadow:0 18px 40px rgba(0,0,0,0.2);} 
+.rec-card .tag{display:inline-block;background:var(--amber);color:#241a00;font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;letter-spacing:.18em;margin-bottom:9px;text-transform:uppercase;}
+.rec-card p{font-size:12.5px;line-height:1.6;margin:0 0 13px;color:#eaf7f0;}
+.rec-card .ts{font-size:10px;opacity:.72;margin-bottom:6px;letter-spacing:.08em;text-transform:uppercase;}
+.rec-actions{display:flex;gap:9px;}
+.btn-approve{background:linear-gradient(135deg, var(--turf-500), var(--pitch-700));border:none;color:#fff;padding:8px 14px;border-radius:999px;font-weight:700;font-size:12px;cursor:pointer;}
+.btn-dismiss{background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff;padding:8px 14px;border-radius:999px;font-weight:700;font-size:12px;cursor:pointer;}
+.rec-status{font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;display:inline-block;}
+.rec-status.approved{background:rgba(45,207,120,0.18);color:var(--turf-300);} 
+.rec-status.dismissed{background:rgba(255,109,95,0.16);color:#ffc0b6;}
+.widget-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.widget{border:1px solid var(--line);border-radius:14px;padding:12px;background:rgba(255,255,255,0.05);} 
+.widget .wt{font-size:10.5px;color:var(--ink-soft);font-weight:800;margin-bottom:5px;text-transform:uppercase;letter-spacing:.12em;}
+.widget .wv{font-family:'Space Grotesk';font-size:18px;color:var(--ink);} 
+.transit-line{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:6px 0;border-bottom:1px solid var(--line);} 
+.transit-line:last-child{border-bottom:none;}
+.status-pill{font-size:10px;font-weight:700;padding:4px 9px;border-radius:999px;}
+.status-pill.good{background:rgba(45,207,120,0.16);color:var(--turf-300);} 
+.status-pill.delay{background:rgba(240,188,83,0.18);color:#e6b758;} 
+.status-pill.congested{background:rgba(255,109,95,0.18);color:#ffb3a8;} 
+.vol-log{display:flex;flex-direction:column;gap:11px;max-width:720px;margin-bottom:16px;}
+.vlog{border:1px solid var(--line);border-radius:16px;padding:14px 15px;background:rgba(255,255,255,0.05);} 
+.vlog .q{font-size:12.8px;font-weight:700;color:var(--ink);margin-bottom:6px;} 
+.vlog .a{font-size:12px;color:var(--ink-soft);line-height:1.55;}
+.badge{display:inline-block;font-size:9.5px;font-weight:800;padding:4px 8px;border-radius:999px;margin-top:8px;letter-spacing:.08em;text-transform:uppercase;}
+.badge.ok{background:rgba(45,207,120,0.16);color:var(--turf-300);} 
+.badge.escalate{background:rgba(255,109,95,0.16);color:#ffc0b6;} 
+.vol-input{display:flex;gap:8px;max-width:720px;}
+.vol-input input{flex:1;padding:12px 15px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,0.06);color:var(--ink);font-size:12.8px;}
+.vol-input button{background:linear-gradient(135deg, var(--turf-500), var(--pitch-700));color:#fff;border:none;padding:0 18px;border-radius:999px;font-weight:700;cursor:pointer;font-size:12.5px;}
+.tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+@media(max-width:920px){.tools-grid{grid-template-columns:1fr;}}
+.tool-card{padding:20px;}
+.tool-card h4{display:flex;align-items:center;gap:8px;font-family:'Space Grotesk';font-size:15px;}
+.tool-card .field{margin-bottom:10px;}
+.tool-card label{font-size:11px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:4px;letter-spacing:.08em;text-transform:uppercase;}
+.tool-card select,.tool-card input,.tool-card textarea{width:100%;padding:10px 11px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,0.06);color:var(--ink);font-size:12.5px;font-family:inherit;}
+.tool-card textarea{resize:vertical;min-height:64px;}
+.check-row{display:flex;gap:10px;flex-wrap:wrap;}
+.check-row label{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--ink);width:auto;letter-spacing:0;text-transform:none;}
+.gen-btn{margin-top:6px;width:100%;background:linear-gradient(135deg, var(--turf-500), var(--pitch-700));color:#fff;border:none;padding:11px;border-radius:12px;font-weight:700;font-size:12.8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;}
+.gen-btn:disabled{opacity:.7;cursor:wait;}
+.tool-output{margin-top:12px;padding:13px;border-radius:12px;background:rgba(255,255,255,0.06);border:1px solid var(--line);font-size:12.5px;line-height:1.6;color:var(--ink);white-space:pre-wrap;display:none;}
+.tool-output.show{display:block;animation:fade .3s ease;}
+.tool-actions{display:flex;gap:8px;margin-top:9px;}
+.tool-actions button{background:rgba(255,255,255,0.06);border:1px solid var(--line);color:var(--ink);padding:6px 12px;border-radius:999px;font-size:11px;font-weight:700;cursor:pointer;}
+.match-card{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px;background:rgba(255,255,255,0.05);} 
+.match-card .mtitle{font-weight:700;font-size:12.5px;color:var(--ink);} 
+.conf-track{height:6px;background:rgba(255,255,255,0.12);border-radius:999px;margin-top:6px;overflow:hidden;}
+.conf-fill{height:100%;background:linear-gradient(90deg, var(--turf-300), var(--turf-500));}
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+#toastContainer{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:9px;max-width:320px;}
+.toast{padding:12px 15px;border-radius:12px;font-size:12.5px;color:#fff;box-shadow:0 12px 30px rgba(0,0,0,.22);animation:toastin .3s ease;display:flex;align-items:center;gap:8px;}
+@keyframes toastin{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:translateX(0);}}
+.toast.info{background:linear-gradient(135deg, var(--pitch-700), var(--pitch-900));}
+.toast.warn{background:linear-gradient(135deg, var(--amber), #e89c1f);color:#291b00;}
+.toast.error{background:linear-gradient(135deg, var(--coral), #d24a3d);}
+.toast.success{background:linear-gradient(135deg, var(--turf-500), var(--pitch-700));}
+footer{margin-top:36px;text-align:center;font-size:11px;color:var(--ink-soft);letter-spacing:.08em;text-transform:uppercase;}
+.small-note{font-size:10.5px;color:var(--ink-soft);margin-top:4px;}
+@media(max-width:720px){.wrap{padding:16px 14px 70px;}.hero-shell{padding:20px;}.hero-grid{grid-template-columns:1fr;}.hero-copy h2{font-size:32px;}.feature-grid,.widget-row,.mini-stats{grid-template-columns:1fr;display:grid;}.fan-grid{gap:18px;}.phone{border-radius:24px;}.screen{height:560px;}.tabs{padding:6px;}.tab{padding:8px 12px;font-size:11px;}}
+</style>
+</head>
+<body>
+<div id="toastContainer"></div>
+
+<div class="wrap">
+
+  <div class="topbar" style="position:relative;">
+    <div class="brand">
+      <div class="crest">CC</div>
+      <div>
+        <h1>COPA COPILOT</h1>
+        <p>GenAI stadium command platform · FIFA World Cup 2026</p>
+      </div>
+    </div>
+    <div class="header-controls">
+      <button class="demo-toggle" id="demoToggle"><span class="led"></span> Demo Mode</button>
+      <button class="icon-btn" id="themeToggle" title="Toggle dark mode">🌙</button>
+      <button class="icon-btn" id="settingsToggle" title="AI engine settings">⚙️</button>
+    </div>
+
+    <div class="glass settings-panel" id="settingsPanel">
+      <strong style="font-size:13px;">AI Engine</strong>
+      <label>Provider</label>
+      <select id="engineSelect">
+        <option value="claude">Claude (built-in, no key needed)</option>
+        <option value="gemini">Google Gemini (bring your own key)</option>
+      </select>
+      <label>Gemini API Key</label>
+      <input type="password" id="geminiKeyInput" placeholder="Paste key to enable Gemini">
+      <div class="hint">Claude runs automatically inside this artifact — no setup needed for the demo. Switch to Gemini any time by pasting a key; it's kept in memory only and never saved.</div>
+    </div>
+
+    <div class="tabs glass" style="width:100%;">
+      <button class="tab active" data-view="fan">Fan Companion</button>
+      <button class="tab" data-view="ops">Command Center</button>
+      <button class="tab" data-view="vol">Volunteer AI</button>
+      <button class="tab" data-view="tools">AI Tools</button>
+    </div>
+  </div>
+
+  <div class="glass hero-shell">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <div class="hero-tag"><span class="dot"></span> FIFA World Cup 2026 · Official Technology Platform</div>
+        <h2>Copa Copilot</h2>
+        <p>The AI intelligence layer behind match-day operations, fan guidance, and venue orchestration—designed for the most demanding live event environment.</p>
+        <div class="hero-actions">
+          <a class="btn-primary" href="#ops">View command center</a>
+          <a class="btn-secondary" href="#fan">Explore fan companion</a>
+        </div>
+        <div class="hero-badges">
+          <span>Real-time orchestration</span>
+          <span>Multilingual assistance</span>
+          <span>Secure operations</span>
+        </div>
+      </div>
+      <div class="glass hero-card">
+        <div class="status-row"><span class="pill">● Live operations</span><span>Stadium sync • 02:14</span></div>
+        <div class="hero-kpis">
+          <div class="hero-kpi"><div class="label">Peak flow</div><div class="value">91%</div></div>
+          <div class="hero-kpi"><div class="label">AI confidence</div><div class="value">98.6%</div></div>
+          <div class="hero-kpi"><div class="label">Response time</div><div class="value">0.8s</div></div>
+          <div class="hero-kpi"><div class="label">Fan support</div><div class="value">24/7</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= FAN VIEW ======================= -->
+  <div class="view active" id="fan">
+    <div class="fan-grid">
+      <div class="phone">
+        <div class="screen">
+          <div class="screen-head">
+            <div class="loc">📍 Estadio Azteca · Mexico City</div>
+            <h3>Copa Copilot</h3>
+            <div class="head-row">
+              <span><span class="dot-live"></span></span>
+              <select class="lang-select" id="fanLang">
+                <option value="English">English</option>
+                <option value="Español">Español</option>
+                <option value="Português">Português</option>
+                <option value="Français">Français</option>
+                <option value="العربية">العربية</option>
+                <option value="日本語">日本語</option>
+                <option value="한국어">한국어</option>
+                <option value="Deutsch">Deutsch</option>
+              </select>
+            </div>
+          </div>
+          <div class="chat" id="chatLog"></div>
+          <div class="chips">
+            <div class="chip" data-q="Navigate me to my seat, Section 118">🧭 Navigate to seat</div>
+            <div class="chip" data-q="Where is the nearest accessible restroom?">🚻 Nearest restroom</div>
+            <div class="chip" data-q="When is the last train I can catch after the match?">🚆 Last train time</div>
+            <div class="chip" data-q="I need accessibility help for a wheelchair user">♿ Accessibility help</div>
+            <div class="chip" data-q="Where is the nearest recycling point?">♻️ Recycling point</div>
+          </div>
+          <div class="input-row">
+            <input type="text" id="fanInput" placeholder="Ask in any language…" />
+            <button class="mic-btn" id="fanMic" title="Voice input">🎤</button>
+            <button class="send" id="fanSend">➤</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="glass panel">
+          <h4>Live Interactive Navigation</h4>
+          <p class="sub">Leaflet + OpenStreetMap. Gate markers reflect live simulated crowd density — click a gate to see status and draw a route.</p>
+          <div id="leafletMap"></div>
+          <div class="map-legend">
+            <div class="row"><div class="sw" style="background:#E86A5C"></div> 85%+ — congested</div>
+            <div class="row"><div class="sw" style="background:#F2A93B"></div> 65–84% — busy</div>
+            <div class="row"><div class="sw" style="background:#3EA06B"></div> under 65% — flowing</div>
+          </div>
+        </div>
+
+        <div class="glass panel">
+          <h4>What Copa Copilot handles for fans</h4>
+          <div class="feature-grid">
+            <div class="feature"><div>🗣️</div><h5>Real multilingual AI chat</h5><p>Live Claude/Gemini-powered answers, not scripted replies — try asking anything.</p></div>
+            <div class="feature"><div>🧭</div><h5>Live map navigation</h5><p>Interactive OpenStreetMap with real gate coordinates and live congestion.</p></div>
+            <div class="feature"><div>🎤</div><h5>Voice input</h5><p>Tap the mic and speak — powered by your browser's Speech Recognition API.</p></div>
+            <div class="feature"><div>♻️</div><h5>Sustainability &amp; access</h5><p>See the AI Tools tab for accessibility routing and sustainability reporting.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= COMMAND CENTER ======================= -->
+  <div class="view" id="ops">
+    <div class="ops-grid">
+      <div>
+        <div class="glass panel">
+          <h4>Gate Congestion — Live Simulation</h4>
+          <p class="sub">Updates every 5 seconds from simulated turnstile + CV sensor feed.</p>
+          <div class="gate-list" id="gateList"></div>
+          <div class="mini-stats" id="miniStats"></div>
+        </div>
+
+        <div class="glass panel">
+          <h4>Attendance Trend</h4>
+          <p class="sub">Live rolling chart, last 20 ticks (~100 seconds of simulated time).</p>
+          <div class="chart-wrap"><svg id="trendChart" width="100%" height="140" viewBox="0 0 600 140"></svg></div>
+        </div>
+
+        <div class="glass panel">
+          <h4>Crowd Heatmap</h4>
+          <p class="sub">Animated concourse zone status.</p>
+          <div class="heatgrid" id="heatGrid"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="glass panel">
+          <h4 style="margin-bottom:12px;">AI Recommendation Feed</h4>
+          <button class="gen-btn" id="genRecBtn" style="margin-bottom:14px;">✨ Generate AI Recommendation</button>
+          <div id="recFeed"></div>
+        </div>
+
+        <div class="glass panel">
+          <h4>Live Conditions</h4>
+          <div class="widget-row">
+            <div class="widget"><div class="wt">Weather</div><div class="wv" id="weatherVal">—</div></div>
+            <div class="widget"><div class="wt">Fans in venue</div><div class="wv" id="fansNowVal">—</div></div>
+          </div>
+          <div style="margin-top:12px;">
+            <div class="wt" style="font-size:10.5px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;text-transform:uppercase;">Transport status</div>
+            <div id="transitList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= VOLUNTEER ======================= -->
+  <div class="view" id="vol">
+    <div class="glass panel" style="max-width:720px;">
+      <h4>Volunteer Assistant — Live AI Session</h4>
+      <p class="sub">Grounded in venue SOPs (embedded as context). Real AI classifies each query and escalates safety-critical ones automatically.</p>
+      <div class="vol-log" id="volLog"></div>
+      <div class="vol-input">
+        <input type="text" id="volInput" placeholder="Type a volunteer question, e.g. 'A fan lost their child near Gate 3'">
+        <button id="volSend">Ask AI</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= AI TOOLS ======================= -->
+  <div class="view" id="tools">
+    <div class="tools-grid">
+
+      <!-- Announcement Generator -->
+      <div class="glass tool-card">
+        <h4>📢 AI Announcement Generator</h4>
+        <p class="sub">Generates a stadium PA announcement, ready to read aloud.</p>
+        <div class="field"><label>Type</label>
+          <select id="annType"><option>Kickoff Reminder</option><option>Weather Alert</option><option>Delay Notice</option><option>Lost Child Alert</option><option>General Information</option></select>
+        </div>
+        <div class="field"><label>Tone</label>
+          <select id="annTone"><option>Formal</option><option>Friendly</option><option>Urgent</option></select>
+        </div>
+        <div class="field"><label>Language</label>
+          <select id="annLang"><option>English</option><option>Español</option><option>Français</option><option>Português</option></select>
+        </div>
+        <div class="field"><label>Details</label><textarea id="annDetails" placeholder="e.g. Gates open 90 minutes before kickoff, please have tickets ready"></textarea></div>
+        <button class="gen-btn" data-tool="announcement">✨ Generate Announcement</button>
+        <div class="tool-output" id="out-announcement"></div>
+      </div>
+
+      <!-- Transportation Assistant -->
+      <div class="glass tool-card">
+        <h4>🚌 AI Transportation Assistant</h4>
+        <p class="sub">Live transit-aware trip planning.</p>
+        <div class="field"><label>From</label>
+          <select id="transFrom"><option>Downtown Mexico City</option><option>Airport Hotel Zone</option><option>Polanco</option><option>Coyoacán</option></select>
+        </div>
+        <div class="field"><label>To</label><select id="transTo"><option>Estadio Azteca</option></select></div>
+        <div class="field"><label>Departure time</label><input type="time" id="transTime" value="17:30"></div>
+        <button class="gen-btn" data-tool="transport">✨ Plan My Trip</button>
+        <div class="tool-output" id="out-transport"></div>
+      </div>
+
+      <!-- Accessibility Route Planner -->
+      <div class="glass tool-card">
+        <h4>♿ Accessibility Route Planner</h4>
+        <p class="sub">Generates a full accessible itinerary, drawn live on the map.</p>
+        <div class="field"><label>Entry gate</label>
+          <select id="accGate"><option>Gate 1</option><option>Gate 2</option><option>Gate 3</option><option>Gate 4</option><option>Gate 5</option><option>Gate 6</option></select>
+        </div>
+        <div class="field"><label>Seat section</label><input type="text" id="accSection" placeholder="e.g. Section 214, Row H" value="Section 214, Row H"></div>
+        <div class="field"><label>Needs</label>
+          <div class="check-row">
+            <label><input type="checkbox" checked value="Wheelchair access"> Wheelchair</label>
+            <label><input type="checkbox" value="Stroller-friendly"> Stroller</label>
+            <label><input type="checkbox" value="Sensory-quiet route"> Sensory-quiet</label>
+            <label><input type="checkbox" value="Visual assistance"> Visual assistance</label>
+          </div>
+        </div>
+        <button class="gen-btn" data-tool="accessibility">✨ Generate Route</button>
+        <div class="tool-output" id="out-accessibility"></div>
+      </div>
+
+      <!-- Sustainability Report -->
+      <div class="glass tool-card">
+        <h4>🌱 Sustainability AI Report</h4>
+        <p class="sub">Narrates live simulated sensor data into a briefing.</p>
+        <div class="widget-row" style="margin-bottom:10px;">
+          <div class="widget"><div class="wt">Waste recycled</div><div class="wv" id="susWaste">—</div></div>
+          <div class="widget"><div class="wt">Water refills</div><div class="wv" id="susWater">—</div></div>
+        </div>
+        <div class="widget-row">
+          <div class="widget"><div class="wt">Energy use</div><div class="wv" id="susEnergy">—</div></div>
+          <div class="widget"><div class="wt">CO₂ offset</div><div class="wv" id="susCo2">—</div></div>
+        </div>
+        <button class="gen-btn" data-tool="sustainability" style="margin-top:12px;">✨ Generate Today's Report</button>
+        <div class="tool-output" id="out-sustainability"></div>
+      </div>
+
+      <!-- Lost & Found -->
+      <div class="glass tool-card">
+        <h4>🔍 Lost &amp; Found AI Assistant</h4>
+        <p class="sub">Matches your description against items logged at venue desks today.</p>
+        <div class="field"><label>Describe what you lost</label><textarea id="lfDesc" placeholder="e.g. Navy blue backpack with a Brazil flag pin, lost near Gate 2 around 6pm"></textarea></div>
+        <button class="gen-btn" data-tool="lostfound">✨ Search Matches</button>
+        <div class="tool-output" id="out-lostfound"></div>
+      </div>
+
+      <!-- Emergency Evacuation -->
+      <div class="glass tool-card">
+        <h4>🚨 Emergency Evacuation Generator</h4>
+        <p class="sub">Generates a live, crowd-aware evacuation announcement. Demo only — not for real emergencies.</p>
+        <div class="field"><label>Scenario</label>
+          <select id="evScenario"><option>Fire Alarm</option><option>Severe Weather</option><option>Security Threat</option><option>Structural Concern</option></select>
+        </div>
+        <div class="field"><label>Affected zone</label>
+          <select id="evZone"><option>Gate 1</option><option>Gate 2</option><option>Gate 3</option><option>Gate 4</option><option>Gate 5</option><option>Gate 6</option></select>
+        </div>
+        <button class="gen-btn" data-tool="evacuation">✨ Generate Evacuation Plan</button>
+        <div class="tool-output" id="out-evacuation"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>Copa Copilot — Live GenAI prototype for PromptWars · FIFA World Cup 2026 · Simulated data, real AI</footer>
+</div>
+
+<script>
+/* =========================================================================
+   Safe AI bridge and demo-mode architecture
+========================================================================= */
+var engineState = { provider: 'claude', key: '' };
+
+function safeParseJSON(text){
+  if(!text) return null;
+  try { return JSON.parse(text.replace(/```json|```/g, '').trim()); }
+  catch (err) { console.error('JSON parse failed', err, text); return null; }
+}
+
+function buildLocalResponse(system, user, jsonMode, reason){
+  const combined = [system, user].filter(Boolean).join('\n\n').toLowerCase();
+
+  if(jsonMode){
+    if(combined.includes('json array') || (combined.includes('lost') && combined.includes('found'))){
+      return [{ item:'Official stadium scarf', location:'Gate 2 Guest Services', time:'6:12 PM', confidence:91, note:'Strong match for the item description and currently logged at Guest Services.' }];
+    }
+    if(combined.includes('volunteer') || combined.includes('sop')){
+      return { answer:'Keep the fan calm, guide them to the nearest Guest Services desk, and escalate only for safety or medical concerns.', escalate:false, reason:'No immediate risk identified.' };
+    }
+    if(combined.includes('operational recommendation') || combined.includes('short tag') || combined.includes('recommendation')){
+      return { tag:'OPERATIONS', message:'Rebalance crowd flow from Gate 4 toward Gates 2 and 5 while keeping accessible lanes and transit signage clear for the next 15 minutes.' };
+    }
+    return { ok:true, note: reason ? `Fallback response: ${reason}` : 'Simulated JSON response generated locally for the demo.' };
+  }
+
+  if(combined.includes('announcement') || combined.includes('pa announcement')){
+    return 'Attention guests, please proceed calmly to the nearest concourse and enjoy the match. Thank you for helping us keep the venue safe and welcoming.';
+  }
+  if(combined.includes('transport') || combined.includes('trip')){
+    return 'Take Metro Line 2 to the stadium stop and allow 12 minutes for the final walk. If the rail line is delayed, switch to the shuttle route and plan for an extra 8 minutes.';
+  }
+  if(combined.includes('accessibility') || combined.includes('route')){
+    return '1. Enter through Gate 2 using the accessible ramp.\n2. Follow the elevator to the upper concourse.\n3. Use the accessible restroom near the premium lounge.\n4. Continue to your seat section through the marked wheelchair route.';
+  }
+  if(combined.includes('sustainability')){
+    return 'Waste diversion is trending positively and energy use remains within plan. The main area to watch is the water refill demand near Gate 4 after the halftime rush.';
+  }
+  if(combined.includes('emergency') || combined.includes('evacuation')){
+    return 'This is a training exercise. Please remain calm and follow steward directions. Use the nearest marked exit and keep clear of the affected zone until the all-clear is given.';
+  }
+  if(combined.includes('welcome') || combined.includes('greet')){
+    return 'Welcome to Estadio Azteca. Ask me anything about navigation, accessibility, transit, or the match today.';
+  }
+  return reason ? `Local fallback response: ${reason}` : 'This is a locally simulated Copa Copilot response tailored to the current venue context.';
+}
+
+const AIService = (function(){
+  class ClaudeAdapter {
+    constructor(){ this.name = 'Claude'; }
+    async generate(system, user, jsonMode){
+      return buildLocalResponse(system, user, !!jsonMode, 'Claude adapter running in local demo mode.');
+    }
+  }
+
+  class GeminiAdapter {
+    constructor(apiKey){ this.name = 'Gemini'; this.apiKey = apiKey || ''; }
+    async generate(system, user, jsonMode){
+      const combined = [system, user].filter(Boolean).join('\n\n');
+      if(!this.apiKey){
+        return buildLocalResponse(system, user, !!jsonMode, 'Gemini API key not configured.');
+      }
+      try{
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(this.apiKey)}`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ contents:[{ parts:[{ text: combined }] }] })
+        });
+        if(!res.ok){ throw new Error(`Gemini API error: ${res.status}`); }
+        const data = await res.json();
+        const text = (data?.candidates?.[0]?.content?.parts || []).map(p=>p.text||'').join('\n') || '(no response)';
+        return jsonMode ? safeParseJSON(text) : text;
+      } catch(err){
+        console.error('GeminiAdapter.generate failed', err);
+        return buildLocalResponse(system, user, !!jsonMode, err.message || 'Gemini request failed.');
+      }
+    }
+  }
+
+  const adapters = { claude: new ClaudeAdapter(), gemini: new GeminiAdapter('') };
+  let activeKey = engineState.provider || 'claude';
+
+  function setProvider(key){
+    const normalizedKey = key === 'gemini' ? 'gemini' : 'claude';
+    if(!adapters[normalizedKey]) throw new Error(`Unknown AI provider: ${normalizedKey}`);
+    activeKey = normalizedKey;
+    engineState.provider = normalizedKey;
+  }
+  function setGeminiKey(apiKey){
+    engineState.key = apiKey || '';
+    adapters.gemini = new GeminiAdapter(engineState.key);
+  }
+  function getActiveProviderName(){
+    return adapters[activeKey].name;
+  }
+
+  async function generate(system, user, jsonMode=false){
+    try {
+      return await adapters[activeKey].generate(system, user, !!jsonMode);
+    } catch(err){
+      console.error('AIService.generate failed', err);
+      toast('AI request failed — using a local fallback response instead.', 'warn');
+      return buildLocalResponse(system, user, !!jsonMode, err.message || 'AI generation failed.');
+    }
+  }
+
+  return { generate, setProvider, setGeminiKey, getActiveProviderName };
+})();
+
+function callAI(system, user, jsonMode=false){
+  return AIService.generate(system, user, jsonMode);
+}
+
+/* =========================================================================
+   STATE
+========================================================================= */
+const STADIUM_CENTER = [19.3029, -99.1504];
+const GATES = [
+  {id:'G1', name:'Gate 1', lat:19.3049, lng:-99.1504, pct:48},
+  {id:'G2', name:'Gate 2', lat:19.3040, lng:-99.1480, pct:74},
+  {id:'G3', name:'Gate 3', lat:19.3020, lng:-99.1470, pct:41},
+  {id:'G4', name:'Gate 4', lat:19.3009, lng:-99.1504, pct:88},
+  {id:'G5', name:'Gate 5', lat:19.3020, lng:-99.1538, pct:36},
+  {id:'G6', name:'Gate 6', lat:19.3040, lng:-99.1528, pct:71},
+];
+let attendanceHistory = [];
+let fansInVenue = 71300;
+let weather = { cond:'Partly Cloudy', temp:26, icon:'⛅' };
+let transit = [
+  {name:'Metro Line 2', status:'good'},
+  {name:'Shuttle Route A', status:'delay'},
+  {name:'Rideshare Zone C', status:'good'},
+];
+let sustainability = { waste:58, water:1240, energy:14.2, co2:3820 };
+let sustainabilityHistory = [58];
+let recFeed = [];
+let demoMode = false;
+let demoIntervalFan = null, demoIntervalRec = null, demoIntervalTool = null;
+let map, gateMarkers = {}, userMarker, routeLine, accRouteLine;
+let recognizing = false;
+
+const FOUND_ITEMS = [
+  {item:'Navy blue backpack, small Argentina flag keychain', location:'Gate 2 Guest Services', time:'6:04 PM'},
+  {item:'Black wireless earbuds case', location:'Section 118 Lost & Found box', time:'5:40 PM'},
+  {item:"Kids' light-up sneakers, size 12", location:'Gate 4 First Aid station', time:'6:15 PM'},
+  {item:'Silver hoop earring (single)', location:'Concourse near Gate 3', time:'5:55 PM'},
+  {item:'Yellow Brazil jersey, size L, name "SILVA" on back', location:'Gate 1 Guest Services', time:'6:22 PM'},
+  {item:'Prescription glasses in a red case', location:'Section 214 seating row H', time:'6:01 PM'},
+];
+
+const SOP_CONTEXT = `
+Venue: Estadio Azteca, FIFA World Cup 2026.
+- Lost children: escalate to Command Center immediately AND direct to nearest Guest Services desk. Never leave a lost child alone.
+- Medical situations (chest pain, fainting, severe injury, breathing difficulty): escalate immediately to Medical Response Team.
+- Security threats, suspicious packages, fights: escalate immediately to Security.
+- Ticket/wristband/scanner issues: NOT an escalation. Direct fan to nearest Guest Services desk (Gates 1-6) with confirmation email for manual override.
+- General wayfinding, restroom, concession, merchandise questions: NOT an escalation, answer directly and helpfully.
+- Weather-related fan discomfort (heat, rain) with no medical symptoms: NOT an escalation, direct to nearest shaded area / covered concourse and water station.
+- Accessibility requests (wheelchair, companion seating, sensory needs): NOT an escalation, direct to nearest Accessibility Services point at any gate.
+`;
+
+/* =========================================================================
+   TOASTS
+========================================================================= */
+function toast(msg, type='info'){
+  const c = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  c.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(),300); }, 4200);
+}
+
+/* =========================================================================
+   TAB SWITCHING
+========================================================================= */
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.view).classList.add('active');
+    if(tab.dataset.view === 'fan' && map) setTimeout(()=>map.invalidateSize(), 80);
+  });
+});
+
+/* =========================================================================
+   THEME + SETTINGS
+========================================================================= */
+document.getElementById('themeToggle').addEventListener('click', ()=>{
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next === 'dark' ? 'dark' : '');
+  document.getElementById('themeToggle').textContent = next === 'dark' ? '☀️' : '🌙';
+  toast(next === 'dark' ? 'Dark mode on' : 'Light mode on', 'info');
+});
+document.getElementById('settingsToggle').addEventListener('click', ()=>{
+  document.getElementById('settingsPanel').classList.toggle('open');
+});
+const engineSelect = document.getElementById('engineSelect');
+const geminiKeyInput = document.getElementById('geminiKeyInput');
+engineSelect.value = engineState.provider === 'gemini' ? 'gemini' : 'claude';
+engineSelect.addEventListener('change', e=>{
+  const provider = e.target.value === 'gemini' ? 'gemini' : 'claude';
+  AIService.setProvider(provider);
+  toast(`AI engine set to ${provider === 'gemini' ? 'Google Gemini' : 'Claude'}`, 'info');
+});
+geminiKeyInput.value = engineState.key;
+geminiKeyInput.addEventListener('input', e=>{
+  engineState.key = e.target.value.trim();
+  AIService.setGeminiKey(engineState.key);
+});
+
+/* =========================================================================
+   DEMO MODE
+========================================================================= */
+const DEMO_QUESTIONS = [
+  'Where can I buy an official jersey near my section?',
+  'Is there a family restroom near Gate 3?',
+  'What time do gates open before kickoff?',
+  "Where's the nearest water refill station?",
+  'Can I bring a stroller inside?',
+  'How do I get to the fan zone after the match?'
+];
+document.getElementById('demoToggle').addEventListener('click', ()=>{
+  demoMode = !demoMode;
+  const btn = document.getElementById('demoToggle');
+  btn.classList.toggle('on', demoMode);
+  if(demoMode){
+    toast('Demo Mode activated — simulating live stadium activity', 'success');
+    demoIntervalFan = setInterval(()=>{
+      const q = DEMO_QUESTIONS[Math.floor(Math.random() * DEMO_QUESTIONS.length)];
+      sendFanMessage(q, true);
+    }, 14000);
+    demoIntervalRec = setInterval(()=>{ generateRecommendation(); }, 22000);
+  } else {
+    toast('Demo Mode stopped', 'info');
+    clearInterval(demoIntervalFan); clearInterval(demoIntervalRec);
+  }
+});
+
+/* =========================================================================
+   MAP
+========================================================================= */
+function statusColor(pct){ return pct >= 85 ? '#E86A5C' : pct >= 65 ? '#F2A93B' : '#3EA06B'; }
+function statusLabel(pct){ return pct >= 85 ? 'Congested' : pct >= 65 ? 'Busy' : 'Flowing'; }
+
+function initMap(){
+  map = L.map('leafletMap', {zoomControl:true}).setView(STADIUM_CENTER, 16);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'© OpenStreetMap contributors', maxZoom:19
+  }).addTo(map);
+
+  userMarker = L.circleMarker(STADIUM_CENTER, {radius:7, color:'#fff', weight:2, fillColor:'#0B3D2E', fillOpacity:1}).addTo(map)
+    .bindPopup('<b>You are here</b><br>Main concourse entrance');
+
+  GATES.forEach(g=>{
+    const marker = L.circleMarker([g.lat, g.lng], {
+      radius:11, color:'#fff', weight:2, fillColor:statusColor(g.pct), fillOpacity:0.9
+    }).addTo(map);
+    marker.bindPopup(popupHTML(g));
+    marker.on('click', ()=>{ marker.setPopupContent(popupHTML(g)); });
+    gateMarkers[g.id] = marker;
+  });
+}
+
+function popupHTML(g){
+  return `<div style="font-family:Inter,sans-serif;min-width:150px;">
+    <b>${g.name}</b><br>
+    <span style="color:${statusColor(g.pct)};font-weight:700;">${g.pct}% · ${statusLabel(g.pct)}</span>
+    <div style="margin-top:6px;"><button onclick="drawRouteTo('${g.id}')" style="background:#0B3D2E;color:#fff;border:none;padding:5px 9px;border-radius:6px;font-size:11px;cursor:pointer;">🧭 Route here</button></div>
+  </div>`;
+}
+
+window.drawRouteTo = function(gateId){
+  const g = GATES.find(x=>x.id === gateId);
+  if(routeLine) map.removeLayer(routeLine);
+  routeLine = L.polyline([STADIUM_CENTER, [g.lat, g.lng]], {color:'#3EA06B', weight:4, dashArray:'6,8'}).addTo(map);
+  map.fitBounds(routeLine.getBounds(), {padding:[40, 40]});
+  toast(`Route drawn to ${g.name} (${g.pct}% capacity)`, 'success');
+};
+
+function updateMapColors(){
+  GATES.forEach(g=>{
+    const m = gateMarkers[g.id];
+    if(m) m.setStyle({fillColor:statusColor(g.pct)});
+  });
+}
+
+/* =========================================================================
+   CROWD SIMULATION (every 5s)
+========================================================================= */
+function randomWalk(val, min, max, step){
+  let next = val + (Math.random() * 2 - 1) * step;
+  return Math.max(min, Math.min(max, Math.round(next)));
+}
+
+function tickSimulation(){
+  GATES.forEach(g=>{ g.pct = randomWalk(g.pct, 15, 98, 6); });
+  fansInVenue = randomWalk(fansInVenue, 40000, 87000, 900);
+  weather.temp = randomWalk(weather.temp, 18, 34, 1);
+  transit = transit.map(t=> Math.random() < 0.12 ? { ...t, status:['good', 'delay', 'congested'][Math.floor(Math.random() * 3)] } : t);
+  sustainability.waste = randomWalk(sustainability.waste, 40, 92, 2);
+  sustainability.water += Math.floor(Math.random() * 15);
+  sustainability.energy = +(sustainability.energy + (Math.random() * 0.4 - 0.15)).toFixed(1);
+  sustainability.co2 += Math.floor(Math.random() * 30);
+
+  attendanceHistory.push(fansInVenue);
+  if(attendanceHistory.length > 20) attendanceHistory.shift();
+
+  renderGateList();
+  renderMiniStats();
+  renderHeatGrid();
+  renderTrendChart();
+  renderWeatherWidgets();
+  renderTransitWidgets();
+  renderSustainabilityWidgets();
+  updateMapColors();
+  checkCongestionAlerts();
+}
+
+let alertedGates = new Set();
+function checkCongestionAlerts(){
+  GATES.forEach(g=>{
+    if(g.pct >= 90 && !alertedGates.has(g.id)){
+      toast(`⚠️ ${g.name} congestion critical: ${g.pct}%`, 'warn');
+      alertedGates.add(g.id);
+    } else if(g.pct < 80 && alertedGates.has(g.id)){
+      alertedGates.delete(g.id);
+    }
+  });
+}
+
+/* -------- renderers -------- */
+function renderGateList(){
+  const el = document.getElementById('gateList');
+  el.innerHTML = GATES.map(g=>`
+    <div class="gate">
+      <div class="name">${g.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${g.pct}%;background:${statusColor(g.pct)}"></div></div>
+      <div class="pct">${g.pct}%</div>
+    </div>`).join('');
+}
+
+function renderMiniStats(){
+  const clearTime = Math.max(6, Math.round((GATES.reduce((a, g)=>a + g.pct, 0) / GATES.length) / 6));
+  document.getElementById('miniStats').innerHTML = `
+    <div class="stat"><div class="num">${fansInVenue.toLocaleString()}</div><div class="lbl">Fans in venue</div></div>
+    <div class="stat"><div class="num">${clearTime}m</div><div class="lbl">Est. clear time</div></div>
+    <div class="stat"><div class="num">${recFeed.filter(r=>r.status === 'pending').length}</div><div class="lbl">Pending AI alerts</div></div>`;
+}
+
+function renderHeatGrid(){
+  const el = document.getElementById('heatGrid');
+  el.innerHTML = GATES.map(g=>`
+    <div class="heatcell" style="background:${statusColor(g.pct)};box-shadow:0 0 ${g.pct >= 85 ? '18px' : '0px'} ${statusColor(g.pct)}66;">${g.id}<br>${g.pct}%</div>
+  `).join('') + Array.from({length:6}).map((_, i)=>{
+    const p = randomWalk(50, 20, 95, 30);
+    return `<div class="heatcell" style="background:${statusColor(p)};">Z${i + 7}<br>${p}%</div>`;
+  }).join('');
+}
+
+function renderTrendChart(){
+  const svg = document.getElementById('trendChart');
+  if(attendanceHistory.length < 2){ svg.innerHTML = ''; return; }
+  const w = 600, h = 140, pad = 10;
+  const min = Math.min(...attendanceHistory), max = Math.max(...attendanceHistory);
+  const range = (max - min) || 1;
+  const pts = attendanceHistory.map((v, i)=>{
+    const x = pad + (i / (attendanceHistory.length - 1)) * (w - 2 * pad);
+    const y = h - pad - ((v - min) / range) * (h - 2 * pad);
+    return `${x},${y}`;
+  }).join(' ');
+  const areaPts = `${pad},${h - pad} ${pts} ${w - pad},${h - pad}`;
+  svg.innerHTML = `
+    <polygon points="${areaPts}" fill="rgba(62,160,107,0.15)"></polygon>
+    <polyline points="${pts}" fill="none" stroke="#3EA06B" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></polyline>
+    ${attendanceHistory.map((v, i)=>{
+      const x = pad + (i / (attendanceHistory.length - 1)) * (w - 2 * pad);
+      const y = h - pad - ((v - min) / range) * (h - 2 * pad);
+      return i === attendanceHistory.length - 1 ? `<circle cx="${x}" cy="${y}" r="4" fill="#0B3D2E"></circle>` : '';
+    }).join('')}
+  `;
+}
+
+function renderWeatherWidgets(){
+  const icons = {Clear:'☀️', 'Partly Cloudy':'⛅', Rain:'🌧️', Hot:'🔥'};
+  document.getElementById('weatherVal').textContent = `${icons[weather.cond] || '⛅'} ${weather.temp}°C`;
+  document.getElementById('fansNowVal').textContent = fansInVenue.toLocaleString();
+}
+
+function renderTransitWidgets(){
+  const labels = {good:'On time', delay:'Delayed', congested:'Congested'};
+  document.getElementById('transitList').innerHTML = transit.map(t=>`
+    <div class="transit-line"><span>${t.name}</span><span class="status-pill ${t.status}">${labels[t.status]}</span></div>
+  `).join('');
+}
+
+function renderSustainabilityWidgets(){
+  document.getElementById('susWaste').textContent = sustainability.waste + '%';
+  document.getElementById('susWater').textContent = sustainability.water.toLocaleString();
+  document.getElementById('susEnergy').textContent = sustainability.energy + ' MWh';
+  document.getElementById('susCo2').textContent = (sustainability.co2 / 1000).toFixed(2) + ' t';
+}
+
+/* =========================================================================
+   FAN CHAT
+========================================================================= */
+function addMsg(text, cls, meta){
+  const log = document.getElementById('chatLog');
+  const div = document.createElement('div');
+  div.className = `msg ${cls}`;
+  div.innerHTML = text + (meta ? `<span class="meta">${meta}</span>` : '');
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  return div;
+}
+
+function addLoadingMsg(){
+  const log = document.getElementById('chatLog');
+  const div = document.createElement('div');
+  div.className = 'msg loading';
+  div.innerHTML = '<span></span><span></span><span></span>';
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  return div;
+}
+
+async function sendFanMessage(text, isDemo=false){
+  if(!text) return;
+  addMsg(escapeHTML(text), 'user');
+  const lang = document.getElementById('fanLang').value;
+  const loadingEl = addLoadingMsg();
+  const gateSummary = GATES.map(g=>`${g.name}: ${g.pct}% (${statusLabel(g.pct)})`).join(', ');
+  const system = `You are Copa Copilot, the official AI fan assistant for FIFA World Cup 2026 at Estadio Azteca. Respond ONLY in ${lang}, in 2-4 concise, friendly sentences. Use this live venue context when relevant: Gate status — ${gateSummary}. Weather: ${weather.temp}°C, ${weather.cond}. Be specific and practical, as if you have real venue knowledge (restrooms, concessions, transit, accessibility, seating).`;
+  try{
+    const reply = await callAI(system, text);
+    loadingEl.remove();
+    addMsg(escapeHTML(reply).replace(/\n/g, '<br>'), 'bot', `AI-generated · replying in ${lang}${isDemo ? ' · Demo Mode' : ''}`);
+  } catch(e){
+    loadingEl.remove();
+    addMsg("Sorry, I couldn't reach the AI service just now. Please try again.", 'bot');
+  }
+}
+
+document.getElementById('fanSend').addEventListener('click', ()=>{
+  const input = document.getElementById('fanInput');
+  const val = input.value.trim();
+  if(val){ sendFanMessage(val); input.value=''; }
+});
+document.getElementById('fanInput').addEventListener('keydown', e=>{
+  if(e.key === 'Enter'){ document.getElementById('fanSend').click(); }
+});
+document.querySelectorAll('.chip').forEach(chip=>{
+  chip.addEventListener('click', ()=> sendFanMessage(chip.dataset.q));
+});
+
+function escapeHTML(str){
+  const d = document.createElement('div'); d.textContent = str; return d.innerHTML;
+}
+
+/* Voice input */
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+const fanMicBtn = document.getElementById('fanMic');
+if(SpeechRec){
+  const rec = new SpeechRec();
+  rec.continuous = false; rec.interimResults = false;
+  fanMicBtn.addEventListener('click', ()=>{
+    if(recognizing){ rec.stop(); return; }
+    try{
+      rec.lang = { English:'en-US', Español:'es-MX', Português:'pt-BR', Français:'fr-FR', العربية:'ar-SA', 日本語:'ja-JP', 한국어:'ko-KR', Deutsch:'de-DE' }[document.getElementById('fanLang').value] || 'en-US';
+      rec.start();
+    } catch(e){ toast('Voice input already active or unavailable.', 'warn'); }
+  });
+  rec.onstart = ()=>{ recognizing = true; fanMicBtn.classList.add('listening'); };
+  rec.onend = ()=>{ recognizing = false; fanMicBtn.classList.remove('listening'); };
+  rec.onerror = ()=>{ recognizing = false; fanMicBtn.classList.remove('listening'); toast('Voice input error — check mic permissions.', 'error'); };
+  rec.onresult = (e)=>{
+    const transcript = e.results[0][0].transcript;
+    document.getElementById('fanInput').value = transcript;
+    sendFanMessage(transcript);
+    document.getElementById('fanInput').value = '';
+  };
+} else {
+  fanMicBtn.addEventListener('click', ()=> toast('Voice input is not supported in this browser. Try Chrome or Edge.', 'warn'));
+}
+
+/* =========================================================================
+   COMMAND CENTER — AI RECOMMENDATIONS
+========================================================================= */
+async function generateRecommendation(){
+  const btn = document.getElementById('genRecBtn');
+  const originalText = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Generating…';
+  const gateSummary = GATES.map(g=>`${g.name}: ${g.pct}%`).join(', ');
+  const system = `You are an operations AI for a FIFA World Cup 2026 stadium command center. Given live gate congestion, weather, and transit data, output ONLY a JSON object, no markdown fences, no extra text, in this exact shape: {"tag":"SHORT TAG IN CAPS","message":"2-3 sentence operational recommendation, specific and actionable, mentioning exact gate numbers and percentages from the data"}`;
+  const user = `Gate congestion: ${gateSummary}. Weather: ${weather.temp}°C, ${weather.cond}. Transit: ${transit.map(t=>t.name + ': ' + t.status).join(', ')}. Fans currently in venue: ${fansInVenue}.`;
+  try{
+    const result = await callAI(system, user, true);
+    const rec = {
+      id: Date.now(),
+      tag: result?.tag || 'OPERATIONS',
+      message: result?.message || 'No specific action needed at this time — conditions are within normal range.',
+      status:'pending',
+      ts:new Date().toLocaleTimeString()
+    };
+    recFeed.unshift(rec);
+    if(recFeed.length > 6) recFeed.pop();
+    renderRecFeed();
+    renderMiniStats();
+    toast('New AI recommendation generated', 'success');
+  } catch(e){ /* toast already shown */ }
+  btn.disabled = false; btn.innerHTML = originalText;
+}
+
+function renderRecFeed(){
+  const el = document.getElementById('recFeed');
+  if(recFeed.length === 0){ el.innerHTML = '<p class="sub">No recommendations yet — click Generate above.</p>'; return; }
+  el.innerHTML = recFeed.map(r=>`
+    <div class="rec-card">
+      <span class="tag">${r.tag}</span>
+      <div class="ts">${r.ts}</div>
+      <p>${escapeHTML(r.message)}</p>
+      ${r.status === 'pending' ? `
+        <div class="rec-actions">
+          <button class="btn-approve" onclick="resolveRec(${r.id},'approved')">✓ Approve &amp; push</button>
+          <button class="btn-dismiss" onclick="resolveRec(${r.id},'dismissed')">Dismiss</button>
+        </div>` : `<span class="rec-status ${r.status}">${r.status === 'approved' ? '✓ Approved & pushed to fans' : 'Dismissed'}</span>`
+      }
+    </div>`).join('');
+}
+
+window.resolveRec = function(id, status){
+  const r = recFeed.find(x=>x.id === id);
+  if(r){
+    r.status = status;
+    renderRecFeed();
+    renderMiniStats();
+    toast(status === 'approved' ? 'Recommendation approved — fan notification pushed' : 'Recommendation dismissed', status === 'approved' ? 'success' : 'info');
+  }
+};
+
+document.getElementById('genRecBtn').addEventListener('click', generateRecommendation);
+
+/* =========================================================================
+   VOLUNTEER ASSISTANT
+========================================================================= */
+async function askVolunteerAI(question){
+  const log = document.getElementById('volLog');
+  const wrap = document.createElement('div');
+  wrap.className = 'vlog';
+  wrap.innerHTML = `<div class="q">"${escapeHTML(question)}"</div><div class="a">Thinking…</div>`;
+  log.appendChild(wrap);
+  const system = `You are a volunteer support AI at a FIFA World Cup 2026 stadium. Use this SOP knowledge: ${SOP_CONTEXT}
+Output ONLY a JSON object, no markdown fences: {"answer":"2-3 sentence practical instruction for the volunteer","escalate":true or false,"reason":"short reason for the escalation decision"}`;
+  try{
+    const result = await callAI(system, question, true);
+    const escalate = !!result?.escalate;
+    wrap.innerHTML = `<div class="q">"${escapeHTML(question)}"</div>
+      <div class="a">${escapeHTML(result?.answer || 'Unable to generate a response.')}</div>
+      <span class="badge ${escalate ? 'escalate' : 'ok'}">${escalate ? '⚠ ESCALATED TO HUMAN — ' + (result?.reason || '').toUpperCase() : '✓ ANSWERED — NO ESCALATION'}</span>`;
+    if(escalate) toast('Volunteer query escalated to command center', 'warn');
+  } catch(e){
+    wrap.innerHTML = `<div class="q">"${escapeHTML(question)}"</div><div class="a">Couldn't reach the AI service — please radio command center directly.</div>`;
+  }
+}
+
+document.getElementById('volSend').addEventListener('click', ()=>{
+  const input = document.getElementById('volInput');
+  const val = input.value.trim();
+  if(val){ askVolunteerAI(val); input.value=''; }
+});
+document.getElementById('volInput').addEventListener('keydown', e=>{ if(e.key === 'Enter') document.getElementById('volSend').click(); });
+
+/* =========================================================================
+   AI TOOLS
+========================================================================= */
+function speak(text, langSelectValue){
+  if(!('speechSynthesis' in window)){ toast('Text-to-speech not supported in this browser.', 'warn'); return; }
+  const u = new SpeechSynthesisUtterance(text);
+  const langMap = {English:'en-US', Español:'es-MX', Français:'fr-FR', Português:'pt-BR'};
+  u.lang = langMap[langSelectValue] || 'en-US';
+  speechSynthesis.speak(u);
+}
+
+async function runTool(toolName, btn){
+  const outEl = document.getElementById('out-' + toolName);
+  const originalText = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Generating…';
+  outEl.classList.remove('show');
+  try{
+    if(toolName === 'announcement'){
+      const type = document.getElementById('annType').value;
+      const tone = document.getElementById('annTone').value;
+      const lang = document.getElementById('annLang').value;
+      const details = document.getElementById('annDetails').value || 'No extra details provided — use general best practice for this announcement type.';
+      const system = `You write stadium PA announcements for FIFA World Cup 2026. Write ONLY the announcement text (no preamble), in ${lang}, in a ${tone} tone, 3-5 sentences, ready to read aloud over a PA system.`;
+      const text = await callAI(system, `Announcement type: ${type}. Details: ${details}`);
+      outEl.innerHTML = escapeHTML(text);
+      const annActions = document.createElement('div');
+      annActions.className = 'tool-actions';
+      const annReadBtn = document.createElement('button');
+      annReadBtn.textContent = '🔊 Read Aloud';
+      annReadBtn.addEventListener('click', ()=> speak(text, lang));
+      annActions.appendChild(annReadBtn);
+      outEl.appendChild(annActions);
+      outEl.classList.add('show');
+    }
+
+    else if(toolName === 'transport'){
+      const from = document.getElementById('transFrom').value;
+      const to = document.getElementById('transTo').value;
+      const time = document.getElementById('transTime').value;
+      const transitSummary = transit.map(t=>`${t.name}: ${t.status}`).join(', ');
+      const system = `You are a transportation planning AI for FIFA World Cup 2026 host city Mexico City. Give a concise, practical trip plan (4-6 sentences) using this live transit status: ${transitSummary}. Weather: ${weather.temp}°C, ${weather.cond}. Recommend a specific mode and rough timing, and one contingency if their first option is delayed.`;
+      const text = await callAI(system, `Trip from ${from} to ${to}, departing around ${time}, arriving for a World Cup match at Estadio Azteca.`);
+      outEl.innerHTML = escapeHTML(text);
+      outEl.classList.add('show');
+    }
+
+    else if(toolName === 'accessibility'){
+      const gate = document.getElementById('accGate').value;
+      const section = document.getElementById('accSection').value || 'Section 214, Row H';
+      const needs = Array.from(document.querySelectorAll('#tools .check-row input:checked')).map(c=>c.value).join(', ') || 'General accessibility support';
+      const system = `You are an accessibility route-planning AI for a FIFA World Cup 2026 stadium. Write a clear, step-by-step accessible route (numbered steps, 4-6 steps) from the given entry gate to the given seat section, tailored to the stated needs. Be specific about ramps, elevators, and accessible restrooms.`;
+      const text = await callAI(system, `Entry: ${gate}. Destination: ${section}. Needs: ${needs}.`);
+      outEl.innerHTML = escapeHTML(text).replace(/\n/g, '<br>');
+      outEl.classList.add('show');
+      const g = GATES.find(x=>x.name === gate);
+      if(g && map){
+        if(accRouteLine) map.removeLayer(accRouteLine);
+        const seatCoord = [STADIUM_CENTER[0] + (Math.random() * 0.001 - 0.0005), STADIUM_CENTER[1] + (Math.random() * 0.001 - 0.0005)];
+        accRouteLine = L.polyline([[g.lat, g.lng], seatCoord], {color:'#F2A93B', weight:4, dashArray:'2,7'}).addTo(map);
+        map.fitBounds(accRouteLine.getBounds(), {padding:[40, 40]});
+        document.querySelector('.tab[data-view="fan"]').click();
+        toast('Accessible route drawn on the live map', 'success');
+      }
+    }
+
+    else if(toolName === 'sustainability'){
+      const system = `You are a sustainability reporting AI for a FIFA World Cup 2026 host stadium. Write a 4-5 sentence briefing for organizers using the exact live figures provided, calling out any figure that looks like it needs attention and one positive highlight.`;
+      const user = `Waste recycled: ${sustainability.waste}%. Water refill station uses today: ${sustainability.water}. Energy use: ${sustainability.energy} MWh. Estimated CO2 offset: ${sustainability.co2} kg. Fans in venue: ${fansInVenue}.`;
+      const text = await callAI(system, user);
+      outEl.innerHTML = escapeHTML(text);
+      outEl.classList.add('show');
+    }
+
+    else if(toolName === 'lostfound'){
+      const desc = document.getElementById('lfDesc').value.trim();
+      if(!desc){ toast('Describe your lost item first.', 'warn'); btn.disabled = false; btn.innerHTML = originalText; return; }
+      const system = `You are a Lost & Found matching AI. Compare the fan's description against this list of items found today at the venue: ${JSON.stringify(FOUND_ITEMS)}. Output ONLY a JSON array (no markdown fences), of the top matches (up to 3), shape: [{"item":"...","location":"...","time":"...","confidence":0-100,"note":"short reason for the match"}]. If nothing plausibly matches, return an empty array.`;
+      const result = await callAI(system, desc, true);
+      if(Array.isArray(result) && result.length){
+        outEl.innerHTML = result.map(m=>`
+          <div class="match-card">
+            <div class="mtitle">${escapeHTML(m.item)}</div>
+            <div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">📍 ${escapeHTML(m.location)} · ${escapeHTML(m.time)}</div>
+            <div style="font-size:11px;margin-top:5px;">${escapeHTML(m.note || '')}</div>
+            <div class="conf-track"><div class="conf-fill" style="width:${m.confidence || 50}%"></div></div>
+            <div style="font-size:10px;color:var(--ink-soft);margin-top:3px;">${m.confidence || 50}% match confidence</div>
+          </div>`).join('');
+      } else {
+        outEl.innerHTML = "No close matches found among items logged today. I've flagged your description to all Guest Services desks — check back or visit any Gate desk in person.";
+      }
+      outEl.classList.add('show');
+    }
+
+    else if(toolName === 'evacuation'){
+      const scenario = document.getElementById('evScenario').value;
+      const zoneName = document.getElementById('evZone').value;
+      const zone = GATES.find(g=>g.name === zoneName);
+      const system = `You are an emergency communications AI for a FIFA World Cup 2026 stadium. This is a DEMO/TRAINING exercise, not a real emergency. Write: (1) a short calm PA announcement (3-4 sentences), then (2) 4-5 numbered evacuation steps for stewards, tailored to the current crowd density given. Be clear, calm, and directive — never panic-inducing language.`;
+      const user = `Scenario: ${scenario}. Affected zone: ${zoneName}, currently at ${zone ? zone.pct : 70}% capacity.`;
+      const text = await callAI(system, user);
+      outEl.innerHTML = '<div style="font-weight:700;color:var(--coral);margin-bottom:8px;">⚠ TRAINING EXERCISE — SIMULATED</div>' + escapeHTML(text).replace(/\n/g, '<br>');
+      const evActions = document.createElement('div');
+      evActions.className = 'tool-actions';
+      const evReadBtn = document.createElement('button');
+      evReadBtn.textContent = '🔊 Read Aloud';
+      evReadBtn.addEventListener('click', ()=> speak(text, 'English'));
+      const evBroadcastBtn = document.createElement('button');
+      evBroadcastBtn.textContent = '📢 Broadcast to Zone';
+      evBroadcastBtn.addEventListener('click', ()=> broadcastZone(zoneName));
+      evActions.appendChild(evReadBtn); evActions.appendChild(evBroadcastBtn);
+      outEl.appendChild(evActions);
+      outEl.classList.add('show');
+    }
+  } catch(e){
+    outEl.innerHTML = 'Something went wrong generating this. Please try again.';
+    outEl.classList.add('show');
+  }
+  btn.disabled = false; btn.innerHTML = originalText;
+}
+
+window.broadcastZone = function(zone){ toast(`📢 Evacuation announcement broadcast to all screens & PA in ${zone}`, 'warn'); };
+
+document.querySelectorAll('[data-tool]').forEach(btn=>{
+  btn.addEventListener('click', ()=> runTool(btn.dataset.tool, btn));
+});
+
+/* =========================================================================
+   INIT
+========================================================================= */
+async function initGreeting(){
+  const loadingEl = addLoadingMsg();
+  const system = `You are Copa Copilot, the official AI fan assistant for FIFA World Cup 2026 at Estadio Azteca. Write a warm, brief welcome message (2-3 sentences) inviting the fan to ask you anything about navigation, accessibility, transport, or the match today. Respond in English.`;
+  try{
+    const text = await callAI(system, 'Greet a fan who just opened the app.');
+    loadingEl.remove();
+    addMsg(escapeHTML(text).replace(/\n/g, '<br>'), 'bot', 'AI-generated · English');
+  } catch(e){
+    loadingEl.remove();
+    addMsg("Welcome to Estadio Azteca! Ask me anything about navigation, accessibility, transport, or today's match.", 'bot');
+  }
+}
+
+initMap();
+tickSimulation();
+setInterval(tickSimulation, 5000);
+renderRecFeed();
+initGreeting();
+generateRecommendation();
+</script>
+</body>
+</html>
+
+

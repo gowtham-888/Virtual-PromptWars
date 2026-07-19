@@ -6,9 +6,14 @@
 <meta name="description" content="Copa Copilot is a premium AI-driven stadium operations and fan experience prototype for FIFA World Cup 2026.">
 <meta name="theme-color" content="#0f3a2a">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; img-src 'self' https: data:; connect-src 'self' https:;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; img-src 'self' https: data:; connect-src 'self' https:; upgrade-insecure-requests;">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains">
+<meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(self)">
 <title>Copa Copilot — GenAI Stadium Command Platform | FIFA World Cup 2026</title>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<link rel="preconnect" href="https://a.tile.openstreetmap.org">
+<link rel="preconnect" href="https://b.tile.openstreetmap.org">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -1274,12 +1279,16 @@ async function initGreeting(){
   }
 }
 
-initMap();
-tickSimulation();
-setInterval(tickSimulation, 5000);
-renderRecFeed();
-initGreeting();
-generateRecommendation();
+function initializeApp(){
+  initMap();
+  tickSimulation();
+  setInterval(tickSimulation, 5000);
+  renderRecFeed();
+  initGreeting();
+  generateRecommendation();
+}
+
+initializeApp();
 </script>
 </body>
 </html>

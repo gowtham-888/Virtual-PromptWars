@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "node tests/accessibility.test.js && node tests/quality.test.js"
+    "test": "node tests/accessibility.test.js && node tests/quality.test.js && node tests/structure.test.js"
   }
 }
